@@ -1,0 +1,54 @@
+name: action
+
+on:
+  [ pull_request_target ]
+
+env:
+   
+   RTL_DIR:      miriscv_verification/core_miriscv/miriscv/rtl
+   SET_VER_ENV:  scripts/set_verif_env.sh
+   CLEAR_CACHE:  scripts/clear_cache.py
+   CLEAR_ARTIF:  scripts/clear_artifacts.sh
+   PREPARE_ART:  scripts/prepare_log.sh
+   IS_VALID_REP: scripts/is_valid.sh
+   CHECK_FD:     scripts/check_faild.sh
+ 
+   SIMULATION:   scripts/build_back.sh
+   SCRIPTS:      hackaton_verif23/scripts
+   ARTI_FILE:    log.tar.bz2
+   SET_ENV:      scripts/set_env.sh
+   
+jobs:
+  
+  TRACK_VERIFICATION:
+    runs-on: self-hosted
+    steps:
+    
+      - name: Clear Workspace
+        run: rm -r ${{ github.workspace }}/* || true
+    
+      - name: Git clone 
+        uses: actions/checkout@v2
+        with:
+          ref: master
+          
+      - name: Checkout tools repo
+        uses: actions/checkout@v2
+        with:      
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: resources
+          
+      - name: Set Current Time 
+        run: echo "NOW=$(date +'%d%h-%H_%M_%S')" >> $GITHUB_ENV
+        
+      - name: Preparations
+        run: |        
+          cp -Rr ~/${{ env.SCRIPTS }} ./;
+          ./${{ env.SET_ENV }} ${{ github.actor }};
+               
+      - name: Simulation
+        run: |
+          ./${{ env.SIMULATION }} scripts ${{ env.NOW }}-HackVerif23
+     
+      - name: 'Clear Workspace'
+        run: rm -r ${{ github.workspace }}/* || true
